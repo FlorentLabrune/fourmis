@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1512494198 source:d:\fourmis\main.cpp
+	<iostream>
+	<stdlib.h>
+	<time.h>
+	<string>
+	<sstream>
+	<windows.h>
+
