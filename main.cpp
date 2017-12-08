@@ -38,6 +38,7 @@ typedef struct{
     t_coord coord;
     int nourriture;
     bool drop;
+    int direction;
     bool follow;
     int idChemin;
 }t_fourmie;
@@ -81,7 +82,10 @@ string afficherSimu(t_fourmie fourmie){
     for(int i = 0; i < Y; i++){
         for(int j = 0; j < X; j++)
             if(fourmie.coord.x == j && fourmie.coord.y == i)
-                toreturn += "|";
+                if(fourmie.direction <= 1)
+                    toreturn += "|";
+                else
+                    toreturn += "_";
             else
                 toreturn += " ";
         toreturn += "\n";
@@ -91,35 +95,53 @@ string afficherSimu(t_fourmie fourmie){
 }
 
 void deplacerFourmie(t_fourmie&fourmie){
-    switch(rand()%4){
+    if(rand()%5 == 0)
+        switch(rand()%4){
+        case 0 :    //la fourmie monte
+                fourmie.direction = 0;
+            break;
 
-    case 0 :    //la fourmie monte
-        if(fourmie.coord.y > 0)
-            fourmie.coord.y--;
-        else
-            fourmie.coord.y++;
-        break;
+        case 1 :    //la fourmie descend
+                fourmie.direction = 1;
+            break;
 
-    case 1 :    //la fourmie descend
-        if(fourmie.coord.y < Y-1)
-            fourmie.coord.y++;
-        else
-            fourmie.coord.y--;
-        break;
+        case 2 :    //la fourmie va a droite
+                fourmie.direction = 2;
+            break;
 
-    case 2 :    //la fourmie va a droite
-        if(fourmie.coord.x < X-1)
-            fourmie.coord.x++;
-        else
-            fourmie.coord.x--;
-        break;
+        case 3 :    //la fourmie va a gauche
+                fourmie.direction = 3;
+            break;
+        }
 
-    case 3 :    //la fourmie va a gauche
-        if(fourmie.coord.x > 0)
-            fourmie.coord.x--;
-        else
-            fourmie.coord.x++;
-        break;
+    switch(fourmie.direction){
+        case 0 :    //la fourmie monte
+            if(fourmie.coord.y > 0)
+                fourmie.coord.y--;
+            else
+                fourmie.direction = 1;
+            break;
+
+        case 1 :    //la fourmie descend
+            if(fourmie.coord.y < Y-1)
+                fourmie.coord.y++;
+            else
+                fourmie.direction = 0;
+            break;
+
+        case 2 :    //la fourmie va a droite
+            if(fourmie.coord.x < X-1)
+                fourmie.coord.x++;
+            else
+                fourmie.direction = 3;
+            break;
+
+        case 3 :    //la fourmie va a gauche
+            if(fourmie.coord.x > 0)
+                fourmie.coord.x--;
+            else
+                fourmie.direction = 2;
+            break;
     }
 }
 
@@ -134,7 +156,7 @@ int main()
         deplacerFourmie(uneFourmie);
         string res = afficherSimu(uneFourmie);
         cout << res;
-        Sleep(500);
+        Sleep(50);
     }
     return 0;
 }
