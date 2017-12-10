@@ -90,7 +90,9 @@ string afficherSimu(t_fourmie fourmie){
                 toreturn += " ";
         toreturn += "\n";
     }
-    toreturn += "x :" + to_string(fourmie.coord.x) + "y :" + to_string(fourmie.coord.y);
+    toreturn.erase(toreturn.end()-1, toreturn.end());
+    //toreturn += "x :" + to_string(fourmie.coord.x) + "y :" + to_string(fourmie.coord.y);
+    toreturn.replace(0, 1, "X");
     return toreturn;
 }
 
