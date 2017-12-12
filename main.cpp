@@ -21,10 +21,10 @@
 #include <sstream>
 #include <windows.h>
 
-#define MAX_FOURMIE 50
+#define MAX_FOURMIE 150
 #define MAX_SOURCE 10
-const int X = 195;
-const int Y = 50;
+const int Y = 62;
+const int X = 200;
 
 
 using namespace std;
@@ -37,6 +37,7 @@ typedef struct{
 typedef struct{
     t_coord coord;
     int nourriture;
+    int vie;
     bool drop;
     int direction;
     bool follow;
@@ -62,7 +63,7 @@ typedef struct{
 }source_nourriture;
 
 typedef source_nourriture t_sources[MAX_SOURCE];
-typedef char t_case[X][Y];
+typedef char t_case[Y][X+1];
 typedef struct{
     t_case maMap;
     fourmiliere maison;
@@ -76,24 +77,51 @@ string to_string(int a){
     return oss.str();
 }
 
-string afficherSimu(t_fourmie fourmie){
-    system("cls");
-    string toreturn = "";
-    for(int i = 0; i < Y; i++){
-        for(int j = 0; j < X; j++)
-            if(fourmie.coord.x == j && fourmie.coord.y == i)
-                if(fourmie.direction <= 1)
-                    toreturn += "|";
-                else
-                    toreturn += "_";
-            else
-                toreturn += " ";
-        toreturn += "\n";
+void spawnFourmie(fourmiliere&fourmil){
+    if(fourmil.nourriture > 0 && fourmil.nbFourmies < MAX_FOURMIE){
+        t_fourmie fourmie = {fourmil.coord, 0, rand()%10+200, false, rand()%4, false, -1};
+        fourmil.fourmies[fourmil.nbFourmies++] = fourmie;
     }
-    toreturn.erase(toreturn.end()-1, toreturn.end());
-    //toreturn += "x :" + to_string(fourmie.coord.x) + "y :" + to_string(fourmie.coord.y);
-    toreturn.replace(0, 1, "X");
-    return toreturn;
+}
+
+void supprimerFourmie(fourmiliere&fourmil, int index){
+    fourmil.fourmies[index] = fourmil.fourmies[fourmil.nbFourmies-1];
+    fourmil.nbFourmies--;
+}
+
+void fatiguerFourmies(fourmiliere&fourmil){
+    for(int i = 0; i < fourmil.nbFourmies; i++){
+        fourmil.fourmies[i].vie -= rand()%3;
+        if(fourmil.fourmies[i].vie < 1)
+            supprimerFourmie(fourmil, i);
+    }
+}
+
+void majMap(t_simulation&simu){
+        for(int i = 0; i < Y; i++){
+            for(int j = 0; j < X; j++)
+                simu.maMap[i][j] = ' ';
+            simu.maMap[i][X] = '\0';
+    }
+
+    for(int i = 0; i < simu.maison.nbFourmies; i ++){
+        t_fourmie fourmi = simu.maison.fourmies[i];
+        char fourm;
+        if(fourmi.direction < 2)
+            fourm = '|';
+        else
+            fourm = '_';
+        simu.maMap[fourmi.coord.y][fourmi.coord.x] = fourm;
+    }
+
+
+    simu.maMap[simu.maison.coord.y-1][simu.maison.coord.x-2] = 30;
+    simu.maMap[simu.maison.coord.y][simu.maison.coord.x-2] = 219;
+    simu.maMap[simu.maison.coord.y][simu.maison.coord.x-1] = 219;
+    simu.maMap[simu.maison.coord.y-1][simu.maison.coord.x] = 30;
+    simu.maMap[simu.maison.coord.y][simu.maison.coord.x] = 219;
+    simu.maMap[simu.maison.coord.y-1][simu.maison.coord.x] = 30;
+    simu.maMap[simu.maison.coord.y][simu.maison.coord.x] = 219;
 }
 
 void deplacerFourmie(t_fourmie&fourmie){
@@ -149,16 +177,35 @@ void deplacerFourmie(t_fourmie&fourmie){
 
 int main()
 {
-    string cmd = "mode " + to_string(X) + ", " + to_string(Y);
+    srand(time(0));
+    string cmd = "mode " + to_string(X+1) + ", " + to_string(Y+1);
     system(cmd.c_str());
-    t_fourmie uneFourmie;
-    t_coord coor = {95, 25};
-    uneFourmie.coord = coor;
+
+    fourmiliere fourmil;
+    fourmil.nbFourmies = 100;
+    fourmil.nourriture = 1;
+    fourmil.coord = {100, 30};
+
+    for(int i = 0; i < 100; i++)
+        fourmil.fourmies[i] = {{2*i, 25}, 0, 200, false, i%4, false, -1};
+
+    t_simulation simu;
+    simu.maison = fourmil;
+
     while(1){
-        deplacerFourmie(uneFourmie);
-        string res = afficherSimu(uneFourmie);
-        cout << res;
-        Sleep(50);
+        for(int i = 0; i < simu.maison.nbFourmies; i++)
+            deplacerFourmie(simu.maison.fourmies[i]);
+
+        if(rand()%3 == 1)
+            spawnFourmie(simu.maison);
+
+        fatiguerFourmies(simu.maison);
+
+        majMap(simu);
+        system("cls");
+        for(int i = 0; i < Y; i++)
+            cout << simu.maMap[i] << "\n";
+        Sleep(100);
     }
     return 0;
 }
