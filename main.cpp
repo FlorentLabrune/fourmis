@@ -121,8 +121,8 @@ void majMap(t_simulation&simu){
     simu.maMap[simu.maison.coord.y-1][simu.maison.coord.x] = 30;
     simu.maMap[simu.maison.coord.y][simu.maison.coord.x] = 219;
     simu.maMap[simu.maison.coord.y-1][simu.maison.coord.x] = 30;
-    simu.maMap[simu.maison.coord.y][simu.maison.coord.x] = 219;
 }
+
 
 void deplacerFourmie(t_fourmie&fourmie){
     if(rand()%5 == 0)
@@ -188,6 +188,7 @@ int main()
 
     for(int i = 0; i < 100; i++)
         fourmil.fourmies[i] = {{2*i, 25}, 0, 200, false, i%4, false, -1};
+
 
     t_simulation simu;
     simu.maison = fourmil;
