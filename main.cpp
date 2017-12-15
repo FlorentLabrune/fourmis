@@ -12,7 +12,7 @@
 */
 
 
-
+//KeyListenner, voir conio21 de Philippe Latu
 
 #include <iostream>
 #include <stdlib.h>
@@ -23,8 +23,15 @@
 
 #define MAX_FOURMIE 150
 #define MAX_SOURCE 10
-const int Y = 20;
-const int X = 200;
+
+#define ET_AVANCER_ALEA 1
+#define ET_SUIVRE_TRACE 2
+#define ET_PRENDRE_NOUR 3
+#define ET_DEPOSER_NOUR 4
+#define ET_RENTRER_HOME 5
+
+const int Y = 50;
+const int X = 100;
 
 
 using namespace std;
@@ -35,6 +42,11 @@ typedef struct{
 }t_coord;
 
 typedef struct{
+    int etatCourant;
+    int etatSuivant;
+}t_etats;
+
+typedef struct{
     t_coord coord;
     int nourriture;
     int vie;
@@ -42,11 +54,13 @@ typedef struct{
     int direction;
     bool follow;
     int idChemin;
+    t_etats etats;
 }t_fourmie;
 
 typedef struct{
     t_coord origine;
     t_coord cible;
+    int id;
 }chemin_phero;
 
 typedef t_fourmie t_fourmies[MAX_FOURMIE];
@@ -79,7 +93,7 @@ string to_string(int a){
 
 void spawnFourmie(fourmiliere&fourmil){
     if(fourmil.nourriture > 0 && fourmil.nbFourmies < MAX_FOURMIE){
-        t_fourmie fourmie = {fourmil.coord, 0, rand()%10+200, false, rand()%4, false, -1};
+        t_fourmie fourmie = {fourmil.coord, 0, rand()%10+95, false, rand()%4, false, -1};
         fourmil.fourmies[fourmil.nbFourmies++] = fourmie;
     }
 }
@@ -95,6 +109,32 @@ void fatiguerFourmies(fourmiliere&fourmil){
         if(fourmil.fourmies[i].vie < 1)
             supprimerFourmie(fourmil, i);
     }
+}
+
+void evolutionEtat(t_fourmie&fourmie){
+    switch(fourmie.etats.etatCourant){
+
+    case ET_AVANCER_ALEA :
+        fourmie.etats.etatSuivant = ET_AVANCER_ALEA;
+        break;
+
+    case : ET_DEPOSER_NOUR :
+        if(fourmie.follow)
+            fourmie.etats.etatSuivant = ET_SUIVRE_TRACE;
+        else
+            fourmie.etats.etatSuivant = ET_AVANCER_ALEA;
+        break;
+
+    case : ET_PRENDRE_NOUR :
+        if(fourmie.follow)
+            fourmie.etats.etatSuivant = ET_SUIVRE_TRACE;
+        else
+            fourmie.etats.etatSuivant = ET_RENTRER_HOME;
+    }
+}
+
+void majEtat(t_fourmie&fourmie){
+    switch()
 }
 
 void majMap(t_simulation&simu){
@@ -182,30 +222,37 @@ int main()
     system(cmd.c_str());
 
     fourmiliere fourmil;
-    fourmil.nbFourmies = 100;
+    fourmil.nbFourmies = 2;
     fourmil.nourriture = 1;
-    fourmil.coord = {100, 30};
+    fourmil.coord = {50, 30};
 
-    for(int i = 0; i < 100; i++)
-        fourmil.fourmies[i] = {{2*i, 25}, 0, 200, false, i%4, false, -1};
+    for(int i = 0; i < 2; i++)
+        fourmil.fourmies[i] = {{2*i, 25}, 0, 200, false, i%4, false, -1, 0};
 
     t_simulation simu;
     simu.maison = fourmil;
 
+    int nbTour = 0;
+    int nbTotalFourmis = 0;
     while(1){
+        nbTour++;
         for(int i = 0; i < simu.maison.nbFourmies; i++)
             deplacerFourmie(simu.maison.fourmies[i]);
 
-        if(rand()%3 == 1)
+        if(rand()%4 == 1)
             spawnFourmie(simu.maison);
 
         fatiguerFourmies(simu.maison);
 
         majMap(simu);
-        system("cls");
-        for(int i = 0; i < Y; i++)
-            cout << simu.maMap[i] << "\n";
-        Sleep(100);
+        nbTotalFourmis += simu.maison.nbFourmies;
+        if(nbTour % 100 == 0){
+            system("cls");
+            //for(int i = 0; i < Y; i++)
+                //cout << simu.maMap[i] << "\n";
+            cout << "nbFourmies : " << simu.maison.nbFourmies << "      nbTour : " << nbTour << "      nbMoy : " << nbTotalFourmis/nbTour;
+            //Sleep(10);
+        }
     }
     return 0;
 }
