@@ -57,9 +57,10 @@ typedef struct{
     t_etats etats;
 }t_fourmie;
 
+typedef t_coord t_liste_coord[X];
 typedef struct{
-    t_coord origine;
-    t_coord cible;
+    t_liste_coord coord_pheros;
+    int nbCoord;
     int id;
 }chemin_phero;
 
@@ -76,6 +77,7 @@ typedef struct{
     int reste;
 }source_nourriture;
 
+typedef chemin_phero t_chemins[MAX_SOURCE];
 typedef source_nourriture t_sources[MAX_SOURCE];
 typedef char t_case[Y][X+1];
 typedef struct{
@@ -83,6 +85,8 @@ typedef struct{
     fourmiliere maison;
     t_sources sources;
     int nbSources;
+    t_chemins chemins;
+    int nbChemins;
 }t_simulation;
 
 string to_string(int a){
@@ -111,6 +115,25 @@ void fatiguerFourmies(fourmiliere&fourmil){
     }
 }
 
+bool coordEquals(t_coord coord1, t_coord coord2){
+    return coord1.x == coord2.x && coord1.y == coord2.y;
+}
+
+/** \brief retourne l'id de la trace de pheromone aux coordonnées coord. Retourne -1 si il n'y a pas de trace a ces coordonnées
+ *
+ * \param simu t_simulation
+ * \param coord t_coord
+ * \return int
+ *
+ */
+int isOnPhero(t_simulation simu, t_coord coord){
+    for(int i = 0; i < simu.nbChemins; i++)
+        for(int j = 0; j < simu.chemins[i].nbCoord; j++)
+            if(coordEquals(coord, simu.chemins[i].coord_pheros[j]))
+                return simu.chemins[i].id;
+    return -1;
+}
+
 void evolutionEtat(t_fourmie&fourmie){
     switch(fourmie.etats.etatCourant){
 
@@ -118,14 +141,14 @@ void evolutionEtat(t_fourmie&fourmie){
         fourmie.etats.etatSuivant = ET_AVANCER_ALEA;
         break;
 
-    case : ET_DEPOSER_NOUR :
+    case ET_DEPOSER_NOUR :
         if(fourmie.follow)
             fourmie.etats.etatSuivant = ET_SUIVRE_TRACE;
         else
             fourmie.etats.etatSuivant = ET_AVANCER_ALEA;
         break;
 
-    case : ET_PRENDRE_NOUR :
+    case ET_PRENDRE_NOUR :
         if(fourmie.follow)
             fourmie.etats.etatSuivant = ET_SUIVRE_TRACE;
         else
@@ -133,8 +156,17 @@ void evolutionEtat(t_fourmie&fourmie){
     }
 }
 
-void majEtat(t_fourmie&fourmie){
-    switch()
+void majEtat(t_simulation&simu, int indexFourmie){
+    t_fourmie fourmie = simu.maison.fourmies[indexFourmie];
+    switch(fourmie.etats.etatCourant){
+
+    case ET_AVANCER_ALEA :
+        fourmie.etats.etatCourant = fourmie.etats.etatSuivant;
+        break;
+
+    //case ET_DEPOSER_NOUR :
+
+    }
 }
 
 void majMap(t_simulation&simu){
