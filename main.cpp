@@ -26,9 +26,7 @@
 
 #define ET_AVANCER_ALEA 1
 #define ET_SUIVRE_TRACE 2
-#define ET_PRENDRE_NOUR 3
-#define ET_DEPOSER_NOUR 4
-#define ET_RENTRER_HOME 5
+#define ET_RENTRER_HOME 3
 
 const int Y = 50;
 const int X = 100;
@@ -42,19 +40,13 @@ typedef struct{
 }t_coord;
 
 typedef struct{
-    int etatCourant;
-    int etatSuivant;
-}t_etats;
-
-typedef struct{
     t_coord coord;
     int nourriture;
     int vie;
     bool drop;
     int direction;
-    bool follow;
     int idChemin;
-    t_etats etats;
+    int etat;
 }t_fourmie;
 
 typedef t_coord t_liste_coord[X];
@@ -119,6 +111,8 @@ bool coordEquals(t_coord coord1, t_coord coord2){
     return coord1.x == coord2.x && coord1.y == coord2.y;
 }
 
+
+
 /** \brief retourne l'id de la trace de pheromone aux coordonnées coord. Retourne -1 si il n'y a pas de trace a ces coordonnées
  *
  * \param simu t_simulation
@@ -126,46 +120,39 @@ bool coordEquals(t_coord coord1, t_coord coord2){
  * \return int
  *
  */
-int isOnPhero(t_simulation simu, t_coord coord){
+bool isOnPhero(t_simulation simu, t_coord coord, chemin_phero & chemin){
     for(int i = 0; i < simu.nbChemins; i++)
         for(int j = 0; j < simu.chemins[i].nbCoord; j++)
-            if(coordEquals(coord, simu.chemins[i].coord_pheros[j]))
-                return simu.chemins[i].id;
-    return -1;
+            if(coordEquals(coord, simu.chemins[i].coord_pheros[j])){
+                chemin = simu.chemins[i];
+                return true;
+            }
+    return false;
 }
 
-void evolutionEtat(t_fourmie&fourmie){
-    switch(fourmie.etats.etatCourant){
-
-    case ET_AVANCER_ALEA :
-        fourmie.etats.etatSuivant = ET_AVANCER_ALEA;
-        break;
-
-    case ET_DEPOSER_NOUR :
-        if(fourmie.follow)
-            fourmie.etats.etatSuivant = ET_SUIVRE_TRACE;
-        else
-            fourmie.etats.etatSuivant = ET_AVANCER_ALEA;
-        break;
-
-    case ET_PRENDRE_NOUR :
-        if(fourmie.follow)
-            fourmie.etats.etatSuivant = ET_SUIVRE_TRACE;
-        else
-            fourmie.etats.etatSuivant = ET_RENTRER_HOME;
-    }
+bool isOnHome(t_simulation simu, t_coord coord){
+    return coordEquals(coord, simu.maison.coord);
 }
 
-void majEtat(t_simulation&simu, int indexFourmie){
-    t_fourmie fourmie = simu.maison.fourmies[indexFourmie];
-    switch(fourmie.etats.etatCourant){
+bool isOnNourriture(t_simulation simu, t_coord coord){
+    for(int i = 0; i < simu.nbSources; i++)
+        if(coordEquals(simu.sources[i].coord, coord))
+            return true;
+    return
+}
+
+void evolutionEtat(t_simulation&simu, t_fourmie&fourmie){
+    switch(fourmie.etat){
 
     case ET_AVANCER_ALEA :
-        fourmie.etats.etatCourant = fourmie.etats.etatSuivant;
+        chemin_phero phero;
+        if(isOnPhero(simu, fourmie.coord, phero)){
+
+            fourmie.etat = ET_SUIVRE_TRACE;
+        }else if(isOnHome(simu, fourmie.coord))
+
+
         break;
-
-    //case ET_DEPOSER_NOUR :
-
     }
 }
 
@@ -196,7 +183,7 @@ void majMap(t_simulation&simu){
     simu.maMap[simu.maison.coord.y][simu.maison.coord.x] = 219;
 }
 
-void deplacerFourmie(t_fourmie&fourmie){
+void deplacerAleaFourmie(t_fourmie&fourmie){
     if(rand()%5 == 0)
         switch(rand()%4){
         case 0 :    //la fourmie monte
@@ -259,7 +246,7 @@ int main()
     fourmil.coord = {50, 30};
 
     for(int i = 0; i < 2; i++)
-        fourmil.fourmies[i] = {{2*i, 25}, 0, 200, false, i%4, false, -1, 0};
+        fourmil.fourmies[i] = {{2*i, 25}, 0, 200, false, i%4, -1, 0};
 
     t_simulation simu;
     simu.maison = fourmil;
@@ -269,7 +256,7 @@ int main()
     while(1){
         nbTour++;
         for(int i = 0; i < simu.maison.nbFourmies; i++)
-            deplacerFourmie(simu.maison.fourmies[i]);
+            deplacerAleaFourmie(simu.maison.fourmies[i]);
 
         if(rand()%4 == 1)
             spawnFourmie(simu.maison);
@@ -278,13 +265,13 @@ int main()
 
         majMap(simu);
         nbTotalFourmis += simu.maison.nbFourmies;
-        if(nbTour % 100 == 0){
+        //if(nbTour % 100 == 0){
             system("cls");
-            //for(int i = 0; i < Y; i++)
-                //cout << simu.maMap[i] << "\n";
-            cout << "nbFourmies : " << simu.maison.nbFourmies << "      nbTour : " << nbTour << "      nbMoy : " << nbTotalFourmis/nbTour;
-            //Sleep(10);
-        }
+            for(int i = 0; i < Y; i++)
+                cout << simu.maMap[i] << "\n";
+            //cout << "nbFourmies : " << simu.maison.nbFourmies << "      nbTour : " << nbTour << "      nbMoy : " << nbTotalFourmis/nbTour;
+            Sleep(100);
+        //}
     }
     return 0;
 }
