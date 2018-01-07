@@ -30,6 +30,7 @@
 
 const int Y = 50;
 const int X = 100;
+int idChemin = 0;
 
 
 using namespace std;
@@ -43,7 +44,6 @@ typedef struct{
     t_coord coord;
     int nourriture;
     int vie;
-    bool drop;
     int direction;
     int idChemin;
     int etat;
@@ -96,9 +96,28 @@ bool coordEquals(t_coord coord1, t_coord coord2){
     return coord1.x == coord2.x && coord1.y == coord2.y;
 }
 
+chemin_phero getChemin(t_simulation&simu, int id){
+    for(int i = 0; i < simu.nbChemins; i++)
+        if(simu.chemins[i].id == id)
+            return simu.chemins[i];
+    return {{}, -1, -1};
+}
+
+t_phero getNewPhero(t_coord&coord){
+    return {coord, 10};
+}
+
+chemin_phero getNewChemin(){
+    return {{}, 0, idChemin++};
+}
+
+void addPheroChemin(chemin_phero&chemin, t_coord&coord){
+    chemin.pheros[chemin.nbCoord++] = getNewPhero(coord);
+}
+
 void spawnFourmie(fourmiliere&fourmil){
     if(fourmil.nourriture > 0 && fourmil.nbFourmies < MAX_FOURMIE){
-        t_fourmie fourmie = {fourmil.coord, 0, rand()%10+95, false, rand()%4, false, -1};
+        t_fourmie fourmie = {fourmil.coord, 0, rand()%10+95, rand()%4, -1};
         fourmil.fourmies[fourmil.nbFourmies++] = fourmie;
     }
 }
@@ -117,11 +136,11 @@ void fatiguerFourmies(fourmiliere&fourmil){
 }
 
 
-/** \brief retourne l'id de la trace de pheromone aux coordonnées coord. Retourne -1 si il n'y a pas de trace a ces coordonnées
+/** \brief retourne l'id de la trace de pheromone aux coordonnées coord. Retourne false si il n'y a pas de trace a ces coordonnées
  *
  * \param simu t_simulation
  * \param coord t_coord
- * \return int
+ * \return bool
  *
  */
 bool isOnPhero(t_simulation simu, t_coord coord, chemin_phero & chemin){
@@ -215,6 +234,24 @@ void deplacerHomeFourmie(t_simulation simu, t_fourmie&fourmie){
     int yOrigine = yA - coef*xA;
     float newY = fourmie.coord.x*coef + yOrigine + 0.5;
     fourmie.coord.y = (int) newY;
+
+    if(fourmie.idChemin > 0){
+        bool isSet = false;
+        chemin_phero chemin = getChemin(simu, fourmie.idChemin);
+        for(int i = 0; i < chemin.nbCoord; i++)
+            if(coordEquals(fourmie.coord, chemin.pheros[i].coord)){
+                chemin.pheros[i].force = 10;
+                isSet = true;
+                i = chemin.nbCoord;
+            }
+        if(!isSet)
+            addPheroChemin(chemin, fourmie.coord);
+    }else{
+        simu.chemins[simu.nbChemins++] = getNewChemin();
+        fourmie.idChemin = simu.chemins[simu.nbChemins-1].id;
+        addPheroChemin(simu.chemins[simu.nbChemins-1], fourmie.coord);
+        chemin_phero unChemin = simu.chemins[simu.nbChemins-1];
+    }
 }
 
 void evolutionEtat(t_simulation&simu, t_fourmie&fourmie){
@@ -227,7 +264,6 @@ void evolutionEtat(t_simulation&simu, t_fourmie&fourmie){
             fourmie.idChemin = phero.id;
             fourmie.etat = ET_SUIVRE_TRACE;
         }else if(isOnNourriture(simu, fourmie.coord, nourri)){
-            fourmie.drop = true;
             nourri.reste -= 50;
             fourmie.nourriture += 50;
             fourmie.etat = ET_RENTRER_HOME;
@@ -239,7 +275,6 @@ void evolutionEtat(t_simulation&simu, t_fourmie&fourmie){
 
     case ET_RENTRER_HOME :
         if(isOnHome(simu, fourmie.coord)){
-            fourmie.drop = false;
             simu.maison.nourriture += fourmie.nourriture;
             fourmie.nourriture = 0;
             fourmie.etat = ET_AVANCER_ALEA;
@@ -296,7 +331,7 @@ int main()
     fourmil.coord = {50, 30};
 
     for(int i = 0; i < 50; i++)
-        fourmil.fourmies[i] = {{2, 5}, 0, 200, false, i%4, -1, ET_AVANCER_ALEA};
+        fourmil.fourmies[i] = {{2, 5}, 0, 200, i%4, -1, ET_AVANCER_ALEA};
 
     t_simulation simu;
     simu.maison = fourmil;
