@@ -217,7 +217,7 @@ void deplacerAleaFourmie(t_fourmie&fourmie){
     }
 }
 
-void deplacerHomeFourmie(t_simulation simu, t_fourmie&fourmie){
+void deplacerHomeFourmie(t_simulation&simu, t_fourmie&fourmie){
     t_coord coord_home = simu.maison.coord;
     t_coord coord_fourm = fourmie.coord;
     float xA, xB, yA, yB;
@@ -342,6 +342,7 @@ int main()
     simu.nbSources = 2;
     simu.sources[0] = nourriture;
     simu.sources[1] = nourriture2;
+    simu.chemins[0] = {{}, -1, -1};
 
     int nbTour = 0;
     int nbTotalFourmis = 0;
