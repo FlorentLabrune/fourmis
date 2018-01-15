@@ -105,7 +105,7 @@ int getIndexChemin(t_simulation&simu, int id){
 }
 
 t_phero getNewPhero(t_coord&coord){
-    return {coord, 10};
+    return {coord, 25};
 }
 
 chemin_phero getNewChemin(){
@@ -133,6 +133,25 @@ void fatiguerFourmies(fourmiliere&fourmil){
         fourmil.fourmies[i].vie -= rand()%3;
         if(fourmil.fourmies[i].vie < 1)
             supprimerFourmie(fourmil, i);
+    }
+}
+
+void fatiguerChemins(t_simulation&simu){
+    for(int i = 0; i < simu.nbChemins; i++)
+        for(int j = 0; j < simu.chemins[i].nbCoord; j++)
+            if(simu.chemins[i].pheros[j].force > 0)
+                simu.chemins[i].pheros[j].force--;
+
+
+    for(int i = 0; i < simu.nbChemins; i++){
+        bool vide = true;
+        for(int j = 0; j < simu.chemins[i].nbCoord; j++)
+            if(simu.chemins[i].pheros[j].force > 0){
+                vide = false;
+                j = simu.chemins[i].nbCoord;
+            }
+        if(vide)
+            simu.chemins[i] = simu.chemins[--simu.nbChemins];
     }
 }
 
@@ -285,6 +304,33 @@ void evolutionEtat(t_simulation&simu, t_fourmie&fourmie){
             deplacerHomeFourmie(simu, fourmie);
         break;
 
+    case ET_SUIVRE_TRACE :
+        if(isOnNourriture(simu, fourmie.coord, nourri)){
+            nourri.reste -= 50;
+            fourmie.nourriture += 50;
+            fourmie.etat = ET_RENTRER_HOME;
+        }else{
+            int index = getIndexChemin(simu, fourmie.idChemin);
+            if(index < 0)
+                fourmie.etat = ET_AVANCER_ALEA;
+            else{
+                bool isNext = false;
+                int i = 0;
+                for(i = 0; i < simu.chemins[index].nbCoord && !isNext; i++)
+                    if(coordEquals(simu.chemins[index].pheros[i].coord, fourmie.coord))
+                        isNext = simu.chemins[index].pheros[i-1].force > 0;
+
+                if(isNext)
+                    fourmie.coord = simu.chemins[index].pheros[i-2].coord;
+                else{
+                    fourmie.idChemin = -1;
+                    fourmie.coord.x++;
+                    fourmie.etat = ET_AVANCER_ALEA;
+                }
+            }
+        }
+        break;
+
     default :
         fourmie.etat = ET_AVANCER_ALEA;
         break;
@@ -311,10 +357,11 @@ void majMap(t_simulation&simu){
 
     for(int i = 0; i < simu.nbChemins; i++)
         for(int j = 0; j < simu.chemins[i].nbCoord; j++)
-            if(simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] == '|' || simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] == '_')
-                simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] = 'i';
-            else
-                simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] = '.';
+            if(simu.chemins[i].pheros[j].force > 0)
+                if(simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] == '|' || simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] == '_')
+                    simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] = 'i';
+                else
+                    simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] = '.';
 
     for(int i = 0; i < simu.nbSources; i++)
         simu.maMap[simu.sources[i].coord.y][simu.sources[i].coord.x] = 'N';
@@ -336,7 +383,7 @@ int main()
     system(cmd.c_str());
 
     fourmiliere fourmil;
-    fourmil.nbFourmies = 50;
+    fourmil.nbFourmies = 10;
     fourmil.nourriture = 1;
     fourmil.coord = {50, 30};
 
@@ -367,6 +414,7 @@ int main()
             //spawnFourmie(simu.maison);
 
         //fatiguerFourmies(simu.maison);
+        fatiguerChemins(simu);
 
         float coef = 0;
         //deplacerHomeFourmie(simu, simu.maison.fourmies[0], coef);
