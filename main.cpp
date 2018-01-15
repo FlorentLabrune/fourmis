@@ -23,6 +23,7 @@
 
 #define MAX_FOURMIE 150
 #define MAX_SOURCE 10
+#define MAX_CHEMIN 100
 
 #define ET_AVANCER_ALEA 1
 #define ET_SUIVRE_TRACE 2
@@ -74,7 +75,7 @@ typedef struct{
     int reste;
 }source_nourriture;
 
-typedef chemin_phero t_chemins[MAX_SOURCE];
+typedef chemin_phero t_chemins[MAX_CHEMIN];
 typedef source_nourriture t_sources[MAX_SOURCE];
 typedef char t_case[Y][X+1];
 typedef struct{
@@ -96,11 +97,11 @@ bool coordEquals(t_coord coord1, t_coord coord2){
     return coord1.x == coord2.x && coord1.y == coord2.y;
 }
 
-chemin_phero getChemin(t_simulation&simu, int id){
+int getIndexChemin(t_simulation&simu, int id){
     for(int i = 0; i < simu.nbChemins; i++)
         if(simu.chemins[i].id == id)
-            return simu.chemins[i];
-    return {{}, -1, -1};
+            return i;
+    return -1;
 }
 
 t_phero getNewPhero(t_coord&coord){
@@ -237,15 +238,15 @@ void deplacerHomeFourmie(t_simulation&simu, t_fourmie&fourmie){
 
     if(fourmie.idChemin > 0){
         bool isSet = false;
-        chemin_phero chemin = getChemin(simu, fourmie.idChemin);
-        for(int i = 0; i < chemin.nbCoord; i++)
-            if(coordEquals(fourmie.coord, chemin.pheros[i].coord)){
-                chemin.pheros[i].force = 10;
+        int indexChemin = getIndexChemin(simu, fourmie.idChemin);
+        for(int i = 0; i < simu.chemins[indexChemin].nbCoord; i++)
+            if(coordEquals(fourmie.coord, simu.chemins[indexChemin].pheros[i].coord)){
+                simu.chemins[indexChemin].pheros[i].force = 10;
                 isSet = true;
-                i = chemin.nbCoord;
+                i = simu.chemins[indexChemin].nbCoord;
             }
         if(!isSet)
-            addPheroChemin(chemin, fourmie.coord);
+            addPheroChemin(simu.chemins[indexChemin], fourmie.coord);
     }else{
         simu.chemins[simu.nbChemins++] = getNewChemin();
         fourmie.idChemin = simu.chemins[simu.nbChemins-1].id;
@@ -260,13 +261,15 @@ void evolutionEtat(t_simulation&simu, t_fourmie&fourmie){
     case ET_AVANCER_ALEA :
         chemin_phero phero;
         source_nourriture nourri;
-        if(isOnPhero(simu, fourmie.coord, phero)){
-            fourmie.idChemin = phero.id;
-            fourmie.etat = ET_SUIVRE_TRACE;
-        }else if(isOnNourriture(simu, fourmie.coord, nourri)){
+        if(isOnNourriture(simu, fourmie.coord, nourri)){
             nourri.reste -= 50;
             fourmie.nourriture += 50;
             fourmie.etat = ET_RENTRER_HOME;
+            if(isOnPhero(simu, fourmie.coord, phero))
+                fourmie.idChemin = phero.id;
+        }else if(isOnPhero(simu, fourmie.coord, phero)){
+            fourmie.idChemin = phero.id;
+            fourmie.etat = ET_SUIVRE_TRACE;
         }else
             deplacerAleaFourmie(fourmie);
 
@@ -306,6 +309,13 @@ void majMap(t_simulation&simu){
         simu.maMap[fourmi.coord.y][fourmi.coord.x] = fourm;
     }
 
+    for(int i = 0; i < simu.nbChemins; i++)
+        for(int j = 0; j < simu.chemins[i].nbCoord; j++)
+            if(simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] == '|' || simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] == '_')
+                simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] = 'i';
+            else
+                simu.maMap[simu.chemins[i].pheros[j].coord.y][simu.chemins[i].pheros[j].coord.x] = '.';
+
     for(int i = 0; i < simu.nbSources; i++)
         simu.maMap[simu.sources[i].coord.y][simu.sources[i].coord.x] = 'N';
 
@@ -329,6 +339,8 @@ int main()
     fourmil.nbFourmies = 50;
     fourmil.nourriture = 1;
     fourmil.coord = {50, 30};
+
+
 
     for(int i = 0; i < 50; i++)
         fourmil.fourmies[i] = {{2, 5}, 0, 200, i%4, -1, ET_AVANCER_ALEA};
@@ -365,7 +377,7 @@ int main()
             system("cls");
             for(int i = 0; i < Y; i++)
                 cout << simu.maMap[i] << "\n";
-            cout << "nbFourmies : " << simu.maison.nbFourmies << "      nbTour : " << nbTour << "      nbMoy : " << nbTotalFourmis/nbTour << "      coef : " << coef;
+            cout << "nbFourmies : " << simu.maison.nbFourmies << "      nbTour : " << nbTour << "      nbMoy : " << nbTotalFourmis/nbTour << "      coef : " << coef << "   nbChemins " << simu.nbChemins;
             Sleep(100);
         //}
     }
