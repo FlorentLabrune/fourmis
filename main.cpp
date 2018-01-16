@@ -105,7 +105,7 @@ int getIndexChemin(t_simulation&simu, int id){
 }
 
 t_phero getNewPhero(t_coord&coord){
-    return {coord, 25};
+    return {coord, 50};
 }
 
 chemin_phero getNewChemin(){
@@ -166,10 +166,12 @@ void fatiguerChemins(t_simulation&simu){
 bool isOnPhero(t_simulation simu, t_coord coord, chemin_phero & chemin){
     for(int i = 0; i < simu.nbChemins; i++)
         for(int j = 0; j < simu.chemins[i].nbCoord; j++)
-            if(coordEquals(coord, simu.chemins[i].pheros[j].coord)){
-                chemin = simu.chemins[i];
-                return true;
-            }
+            if(coordEquals(coord, simu.chemins[i].pheros[j].coord))
+                if(simu.chemins[i].pheros[j].force > 0){
+                    chemin = simu.chemins[i];
+                    return true;
+                }else
+                    return false;
     return false;
 }
 
@@ -254,13 +256,15 @@ void deplacerHomeFourmie(t_simulation&simu, t_fourmie&fourmie){
     int yOrigine = yA - coef*xA;
     float newY = fourmie.coord.x*coef + yOrigine + 0.5;
     fourmie.coord.y = (int) newY;
+}
 
-    if(fourmie.idChemin > 0){
+void dropPhero(t_simulation&simu, t_fourmie&fourmie){
+    if(fourmie.idChemin >= 0){
         bool isSet = false;
         int indexChemin = getIndexChemin(simu, fourmie.idChemin);
         for(int i = 0; i < simu.chemins[indexChemin].nbCoord; i++)
             if(coordEquals(fourmie.coord, simu.chemins[indexChemin].pheros[i].coord)){
-                simu.chemins[indexChemin].pheros[i].force = 10;
+                simu.chemins[indexChemin].pheros[i].force = 50;
                 isSet = true;
                 i = simu.chemins[indexChemin].nbCoord;
             }
@@ -270,7 +274,6 @@ void deplacerHomeFourmie(t_simulation&simu, t_fourmie&fourmie){
         simu.chemins[simu.nbChemins++] = getNewChemin();
         fourmie.idChemin = simu.chemins[simu.nbChemins-1].id;
         addPheroChemin(simu.chemins[simu.nbChemins-1], fourmie.coord);
-        chemin_phero unChemin = simu.chemins[simu.nbChemins-1];
     }
 }
 
@@ -297,11 +300,14 @@ void evolutionEtat(t_simulation&simu, t_fourmie&fourmie){
 
     case ET_RENTRER_HOME :
         if(isOnHome(simu, fourmie.coord)){
+            dropPhero(simu, fourmie);
             simu.maison.nourriture += fourmie.nourriture;
             fourmie.nourriture = 0;
             fourmie.etat = ET_AVANCER_ALEA;
-        }else
+        }else{
+            dropPhero(simu, fourmie);
             deplacerHomeFourmie(simu, fourmie);
+        }
         break;
 
     case ET_SUIVRE_TRACE :
@@ -315,16 +321,15 @@ void evolutionEtat(t_simulation&simu, t_fourmie&fourmie){
                 fourmie.etat = ET_AVANCER_ALEA;
             else{
                 bool isNext = false;
-                int i = 0;
+                int i = 1;
                 for(i = 0; i < simu.chemins[index].nbCoord && !isNext; i++)
                     if(coordEquals(simu.chemins[index].pheros[i].coord, fourmie.coord))
                         isNext = simu.chemins[index].pheros[i-1].force > 0;
 
-                if(isNext)
-                    fourmie.coord = simu.chemins[index].pheros[i-2].coord;
-                else{
+
+                fourmie.coord = simu.chemins[index].pheros[i-2].coord;
+                if(!isNext){
                     fourmie.idChemin = -1;
-                    fourmie.coord.x++;
                     fourmie.etat = ET_AVANCER_ALEA;
                 }
             }
