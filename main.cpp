@@ -102,7 +102,7 @@ string to_string(int a){
 }
 
 t_coord getRandomCoord(){
-    return {rand()%X, rand()%Y};
+    return {rand()%X-1, rand()%Y};
 }
 
 bool coordEquals(t_coord coord1, t_coord coord2){
@@ -132,6 +132,7 @@ void spawnfourmi(fourmiliere&fourmil){
     if(fourmil.nourriture > 0 && fourmil.nbfourmis < MAX_fourmi){
         t_fourmi fourmi = {fourmil.coord, 0, rand()%10+(vie_base-5), rand()%4, -1};
         fourmil.fourmis[fourmil.nbfourmis++] = fourmi;
+        fourmil.nourriture -= 50;
     }
 }
 
@@ -356,11 +357,13 @@ void evolutionEtat(t_simulation&simu, t_fourmi&fourmi){
                     if(coordEquals(simu.chemins[index].pheros[i].coord, fourmi.coord))
                             isNext = simu.chemins[index].pheros[i-1].force > 0;
 
-                fourmi.coord = simu.chemins[index].pheros[i-2].coord;
+
                 if(!isNext){
                     fourmi.idChemin = -1;
+                    fourmi.coord.x++;
                     fourmi.etat = ET_AVANCER_ALEA;
-                }
+                }else
+                    fourmi.coord = simu.chemins[index].pheros[i-2].coord;
             }
         }
         break;
@@ -618,30 +621,25 @@ int main()
     simu.chemins[0] = {{}, -1, -1};
 
     int nbTour = 0;
-    int nbTotalFourmis = 0;
     while(1){
         nbTour++;
         for(int i = 0; i < simu.maison.nbfourmis; i++)
             evolutionEtat(simu, simu.maison.fourmis[i]);
 
-        //if(rand()%((int)(1./taux)) == 1)
-            //spawnfourmi(simu.maison);
+        if(rand()%((int)(1./taux)) == 1 && simu.maison.nourriture > 0)
+            spawnfourmi(simu.maison);
 
-        //fatiguerfourmis(simu.maison);
+        fatiguerfourmis(simu.maison);
         fatiguerChemins(simu);
 
-        float coef = 0;
-        //deplacerHomefourmi(simu, simu.maison.fourmis[0], coef);
-
         majMap(simu);
-        nbTotalFourmis += simu.maison.nbfourmis;
-        //if(nbTour % 100 == 0){
-            system("cls");
-            for(int i = 0; i < Y; i++)
-                cout << simu.maMap[i] << "\n";
-            cout << "nbfourmis : " << simu.maison.nbfourmis << "      nbTour : " << nbTour << "      nbMoy : " << nbTotalFourmis/nbTour << "      coef : " << coef << "   nbChemins " << simu.nbChemins;
-            Sleep(100);
-        //}
+        system("cls");
+        string affiche = "";
+        for(int i = 0; i < Y; i++)
+            affiche += string(simu.maMap[i]) + "\n";
+        cout << affiche;
+        cout << "nbfourmis : " << simu.maison.nbfourmis << "      nbTour : " << nbTour << "      nbNour : " << simu.maison.nourriture;
+        Sleep(100);
     }
     return 0;
 }
