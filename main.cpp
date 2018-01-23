@@ -621,7 +621,7 @@ int main()
     simu.chemins[0] = {{}, -1, -1};
 
     int nbTour = 0;
-    while(1){
+    while(simu.maison.nbfourmis > 0 && (simu.maison.nourriture > 0 || taux != 0.000000000001)){
         nbTour++;
         for(int i = 0; i < simu.maison.nbfourmis; i++)
             evolutionEtat(simu, simu.maison.fourmis[i]);
@@ -633,13 +633,16 @@ int main()
         fatiguerChemins(simu);
 
         majMap(simu);
-        system("cls");
         string affiche = "";
         for(int i = 0; i < Y; i++)
             affiche += string(simu.maMap[i]) + "\n";
+        system("cls");
         cout << affiche;
         cout << "nbfourmis : " << simu.maison.nbfourmis << "      nbTour : " << nbTour << "      nbNour : " << simu.maison.nourriture;
         Sleep(100);
     }
+
+    system("cls");
+    cout << "Votre fourmilière est morte au bout de " << nbTour << " tours.\n A bientot sur le similuateur de fourmis 3000 !";
     return 0;
 }
