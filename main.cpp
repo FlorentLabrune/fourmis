@@ -1,13 +1,13 @@
 /* ========== CAHIER DES CHARGES ============
 
-    La simulation est une simulation de fourmiliere qui évolue dans son environnement.
+    La simulation est une simulation de fourmiliere qui Ã©volue dans son environnement.
     Elle comportera :
         - Des fourmis
         - Une fourmiliere de fourmis avec un stock de nourriture
         - Des sources de nourritures fini
 
     I) Les fourmis
-        Chaque fourmis
+        Chaque fourmis doit
 
 */
 
@@ -173,7 +173,7 @@ void fatiguerChemins(t_simulation&simu){
 }
 
 
-/** \brief retourne l'id de la trace de pheromone aux coordonnées coord. Retourne false si il n'y a pas de trace a ces coordonnées
+/** \brief retourne l'id de la trace de pheromone aux coordonnÃ©es coord. Retourne false si il n'y a pas de trace a ces coordonnÃ©es
  *
  * \param simu t_simulation
  * \param coord t_coord
@@ -444,9 +444,9 @@ int menuParametre(){
                 <<  endl
                 <<  endl
                 <<  "MENU DE PARAMETRAGE" << endl
-                <<  "1) Modifier le nombre de fourmis en début de partie" << endl
+                <<  "1) Modifier le nombre de fourmis en dÃ©but de partie" << endl
                 <<  "2) Modifier la vie de base d'une fourmie" << endl
-                <<  "3) Modifier le taux de natalité de la fourmiliere" << endl
+                <<  "3) Modifier le taux de natalitÃ© de la fourmiliere" << endl
                 <<  "4) Modifier le nombre de source de nourriture sur la map" << endl
                 <<  "5) Modifier la quantite de nourriture dans les sources" << endl
                 <<  "6) Modifier la force d'une trace de pheromone" << endl
@@ -468,7 +468,7 @@ void parametreNbFourmis(){
         cout    <<  "\t\t\t    Bienvenue sur le simulateur de fourmis 3000 !" << endl
                 <<  "=====================================================================================================" << endl
                 <<  endl
-                <<  "Parametrage du nombre de fourmis en début de partie" << endl
+                <<  "Parametrage du nombre de fourmis en dÃ©but de partie" << endl
                 <<  endl
                 <<  "Parametre actuel : " << fourmis_base << endl
                 <<  "Nouvelle valeur (comprise entre 1 et 200) : " << endl;
@@ -504,7 +504,7 @@ void parametreTauxNaissance(){
                 <<  endl
                 <<  "Parametrage du taux de naissance" << endl
                 <<  endl
-                <<  "0 correspond à aucune naissance et 1 à une naissance par tour"
+                <<  "0 correspond Ã  aucune naissance et 1 Ã  une naissance par tour"
                 <<  "Parametre actuel : " << taux << endl
                 <<  "Nouvelle valeur (comprise entre 0 et 1) : " << endl;
         fflush(stdin);
@@ -520,7 +520,7 @@ void parametreNbSources(){
         cout    <<  "\t\t\t    Bienvenue sur le simulateur de fourmis 3000 !" << endl
                 <<  "=====================================================================================================" << endl
                 <<  endl
-                <<  "Parametrage du nombre de sources de nourriture en début de partie" << endl
+                <<  "Parametrage du nombre de sources de nourriture en dÃ©but de partie" << endl
                 <<  endl
                 <<  "Parametre actuel : " << nbSources << endl
                 <<  "Nouvelle valeur (comprise entre 1 et 50) : " << endl;
@@ -643,6 +643,6 @@ int main()
     }
 
     system("cls");
-    cout << "Votre fourmilière est morte au bout de " << nbTour << " tours.\n A bientot sur le similuateur de fourmis 3000 !";
+    cout << "Votre fourmiliÃ¨re est morte au bout de " << nbTour << " tours.\n A bientot sur le similuateur de fourmis 3000 !";
     return 0;
 }
